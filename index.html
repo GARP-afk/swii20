@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy Birthday 🎂</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink: #f472b6;
+      --rose: #e11d48;
+      --purple: #a855f7;
+      --gold: #fbbf24;
+      --bg: #0c0a09;
+      --glass-bg: rgba(15, 10, 14, 0.72);
+      --glass-border: rgba(255,255,255,0.08);
+      --text: #f1e8f0;
+      --muted: #b8a4c0;
+    }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── AURORA ── */
+    #aurora {
+      position: fixed; inset: 0; z-index: 0;
+      overflow: hidden;
+    }
+    #aurora::before, #aurora::after,
+    #aurora .a3, #aurora .a4 {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    #aurora::before {
+      width: 70vw; height: 70vw;
+      background: radial-gradient(circle, hsla(333,70%,55%,.45), transparent 70%);
+      top: -20%; left: -20%;
+      animation-delay: 0s;
+    }
+    #aurora::after {
+      width: 60vw; height: 60vw;
+      background: radial-gradient(circle, hsla(282,82%,54%,.35), transparent 70%);
+      bottom: -15%; right: -10%;
+      animation-delay: -6s;
+    }
+    #aurora .a3 {
+      width: 55vw; height: 55vw;
+      background: radial-gradient(circle, hsla(210,89%,60%,.3), transparent 70%);
+      top: 30%; right: 5%;
+      animation-delay: -3s; animation-duration: 22s;
+    }
+    #aurora .a4 {
+      width: 45vw; height: 45vw;
+      background: radial-gradient(circle, hsla(35,90%,60%,.25), transparent 70%);
+      bottom: 10%; left: 10%;
+      animation-delay: -9s; animation-duration: 14s;
+    }
+    @keyframes drift {
+      0%   { transform: translate(0,0) scale(1); }
+      33%  { transform: translate(4vw, -3vh) scale(1.08); }
+      66%  { transform: translate(-3vw, 5vh) scale(.95); }
+      100% { transform: translate(2vw, 2vh) scale(1.04); }
+    }
+
+    /* ── THREE.JS CANVAS ── */
+    #three-canvas {
+      position: fixed; inset: 0; z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── PROGRESS BAR ── */
+    #progress-wrap {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 100;
+      width: min(340px, 85vw);
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--pink), var(--rose));
+      border-radius: 99px;
+      transition: width .7s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 0 12px rgba(244,114,182,.6);
+    }
+
+    /* ── SCENE WRAPPER ── */
+    #scene {
+      position: fixed; inset: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      position: absolute;
+      width: min(480px, 92vw);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      backdrop-filter: blur(32px) saturate(1.4);
+      -webkit-backdrop-filter: blur(32px) saturate(1.4);
+      box-shadow: 0 8px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,0.04) inset;
+      padding: 44px 36px 40px;
+      text-align: center;
+      display: none;
+      opacity: 0;
+    }
+    .card.active { display: block; }
+
+    /* ── ICON ── */
+    .card-icon {
+      font-size: clamp(48px, 10vw, 72px);
+      line-height: 1;
+      margin-bottom: 20px;
+      display: block;
+      animation: heartbeat 2.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 18px rgba(244,114,182,.7));
+    }
+    @keyframes heartbeat {
+      0%,100% { transform: scale(1); }
+      14% { transform: scale(1.14); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.08); }
+      56% { transform: scale(1); }
+    }
+    .card-icon.party { animation: wobble 3s ease-in-out infinite; }
+    .card-icon.cake  { animation: float-cake 3s ease-in-out infinite; }
+    @keyframes wobble {
+      0%,100% { transform: rotate(-4deg) scale(1); }
+      50% { transform: rotate(5deg) scale(1.08); }
+    }
+    @keyframes float-cake {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* ── HEADINGS ── */
+    .card h1, .card h2 {
+      font-family: 'Playfair Display', serif;
+      line-height: 1.2;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #fce7f3, #f9a8d4, #fff, #fce7f3);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .card h1 { font-size: clamp(30px, 7vw, 42px); font-weight: 900; }
+    .card h2 { font-size: clamp(22px, 5vw, 30px); font-weight: 700; }
+
+    /* ── BODY TEXT ── */
+    .card p {
+      color: var(--muted);
+      font-size: clamp(14px, 3vw, 16px);
+      line-height: 1.75;
+      margin-bottom: 28px;
+    }
+
+    /* ── BUTTON ── */
+    .btn {
+      display: inline-block;
+      padding: 14px 36px;
+      border-radius: 99px;
+      background: linear-gradient(135deg, #f472b6, #e11d48);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      letter-spacing: .02em;
+      box-shadow: 0 4px 24px rgba(225,29,72,.45), 0 0 0 0 rgba(244,114,182,.4);
+      transition: transform .18s ease, box-shadow .18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background .15s;
+    }
+    .btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 36px rgba(225,29,72,.6), 0 0 0 6px rgba(244,114,182,.15);
+    }
+    .btn:active {
+      transform: translateY(0px) scale(.97);
+      box-shadow: 0 2px 12px rgba(225,29,72,.3);
+    }
+    .btn:disabled { opacity: .4; pointer-events: none; }
+
+    /* ── BENTO GRID (Step 3) ── */
+    .bento {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+    .bento-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 16px;
+      transition: background .2s, transform .2s;
+    }
+    .bento-card:hover {
+      background: rgba(255,255,255,0.08);
+      transform: translateY(-2px);
+    }
+    .bento-card.wide { grid-column: 1 / -1; }
+    .bento-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px; font-weight: 700;
+      color: var(--pink);
+      margin-bottom: 6px;
+    }
+    .bento-card p {
+      font-size: 13px; color: var(--muted);
+      margin-bottom: 0; line-height: 1.6;
+    }
+
+    /* ── POLAROID (Step 4) ── */
+    .polaroid-wrap {
+      perspective: 800px;
+      margin: 0 auto 24px;
+      width: fit-content;
+      cursor: pointer;
+    }
+    .polaroid {
+      background: #fff;
+      padding: 12px 12px 36px;
+      border-radius: 4px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.1);
+      transform: rotate(-3deg);
+      transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s;
+      transform-style: preserve-3d;
+      max-width: 220px;
+    }
+    .polaroid-wrap:hover .polaroid {
+      box-shadow: 0 30px 80px rgba(0,0,0,.7);
+    }
+    .polaroid img {
+      width: 100%; display: block;
+      border-radius: 2px;
+      object-fit: cover;
+      height: 160px;
+    }
+    .polaroid-caption {
+      text-align: center;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: #444;
+      margin-top: 8px;
+    }
+
+    /* ── FINALE TEXT ── */
+    #final-msg {
+      display: none; opacity: 0;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(18px, 4vw, 22px);
+      font-style: italic;
+      background: linear-gradient(135deg, #fce7f3, #f9a8d4, #fff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 16px 0 0;
+      line-height: 1.5;
+    }
+
+    /* ── STAGGER CHILDREN ── */
+    .stagger > * { opacity: 0; transform: translateY(16px); }
+  </style>
+</head>
+<body>
+
+<!-- Aurora layers -->
+<div id="aurora"><div class="a3"></div><div class="a4"></div></div>
+<canvas id="three-canvas"></canvas>
+
+<!-- Progress -->
+<div id="progress-wrap"><div id="progress-bar"></div></div>
+
+<!-- Steps -->
+<div id="scene">
+
+  <!-- Step 1 -->
+  <div class="card active stagger" id="step-1">
+    <span class="card-icon">❤️</span>
+    <h1>HEY PAGLI,</h1>
+    <p>I built a little world for you, just to bring a smile to your face on your special day.</p>
+    <button class="btn" onclick="goTo(2)">Let's Begin</button>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card stagger" id="step-2">
+    <span class="card-icon party">🎉</span>
+    <h1>Happy Birthday<br>MADAM JII!</h1>
+    <p>Your existence is a gift, and I'm so lucky to witness it.</p>
+    <button class="btn" onclick="goTo(3)">There's more...</button>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="card stagger" id="step-3">
+    <h2>A Few Things I Adore About You</h2>
+    <div class="bento">
+      <div class="bento-card wide">
+        <h3>✨ Your Unmatched Kindness</h3>
+        <p>The genuine warmth you show to everyone is something truly rare and beautiful.</p>
+      </div>
+      <div class="bento-card">
+        <h3>😊 That Smile</h3>
+        <p>It's a work of art.</p>
+      </div>
+      <div class="bento-card wide">
+        <h3>🌟 Your Spirit</h3>
+        <p>Being around you makes everything feel more exciting and possible.</p>
+      </div>
+    </div>
+    <button class="btn" onclick="goTo(4)">Remember this?</button>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="card stagger" id="step-4">
+    <h2>That One Time...</h2>
+    <div class="polaroid-wrap" id="polaroid-wrap">
+      <div class="polaroid" id="polaroid">
+        <img src="https://i.ibb.co/B5pHtZ3Q" alt="Our favorite memory" onerror="this.src='https://placehold.co/196x160/1a0a14/f472b6?text=Our+Memory'">
+        <div class="polaroid-caption">Our favorite memory.</div>
+      </div>
+    </div>
+    <p>Every moment with you feels like a scene from a movie I'd watch on repeat.</p>
+    <button class="btn" onclick="goTo(5)">One last thing...</button>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="card stagger" id="step-5">
+    <span class="card-icon cake">🎂</span>
+    <h2>My Wish For You</h2>
+    <p>May the next year bring you all the love, success, and pure happiness you so rightfully deserve. May your dreams soar higher than ever.</p>
+    <button class="btn" id="celebrate-btn" onclick="celebrate()">Celebrate! 🎊</button>
+    <div id="final-msg">Happy Birthday, my love! ❤️</div>
+  </div>
+
+</div><!-- /scene -->
+
+<script>
+/* ──────────────────────────────
+   THREE.JS — Floating 3D Hearts
+────────────────────────────── */
+(function initThree() {
+  const canvas = document.getElementById('three-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
+  camera.position.z = 18;
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(innerWidth, innerHeight);
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  // Simple heart shape
+  function makeHeartShape() {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0.5);
+    shape.bezierCurveTo( 0.5, 1,   1.2, 0.5,  1.2, 0);
+    shape.bezierCurveTo( 1.2,-0.5,  0, -0.8,   0, -1.2);
+    shape.bezierCurveTo( 0, -0.8, -1.2,-0.5, -1.2, 0);
+    shape.bezierCurveTo(-1.2, 0.5, -0.5,  1,   0, 0.5);
+    return shape;
+  }
+
+  const heartShape = makeHeartShape();
+  const extrudeSettings = { depth: 0.22, bevelEnabled: true, bevelSegments: 3, bevelSize: 0.06, bevelThickness: 0.06 };
+  const geo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+
+  const palette = [0xf472b6, 0xe11d48, 0xfb7185, 0xfda4af, 0xf9a8d4, 0xec4899];
+  const hearts = [];
+
+  for (let i = 0; i < 22; i++) {
+    const mat = new THREE.MeshPhongMaterial({
+      color: palette[i % palette.length],
+      shininess: 90,
+      specular: 0xffffff,
+      transparent: true,
+      opacity: 0.7 + Math.random() * 0.3,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    const s = 0.18 + Math.random() * 0.38;
+    mesh.scale.setScalar(s);
+    mesh.position.set(
+      (Math.random() - 0.5) * 28,
+      (Math.random() - 0.5) * 22,
+      (Math.random() - 0.5) * 10 - 4
+    );
+    mesh.rotation.set(
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2
+    );
+    const speed = { x: 0.002 + Math.random() * 0.003, y: 0.001 + Math.random() * 0.002, z: 0.001 + Math.random() * 0.002 };
+    const amp = 0.6 + Math.random() * 0.8;
+    const phase = Math.random() * Math.PI * 2;
+    hearts.push({ mesh, speed, amp, phase, baseY: mesh.position.y });
+    scene.add(mesh);
+  }
+
+  // Lights
+  const ambLight = new THREE.AmbientLight(0xffeeff, 0.8);
+  scene.add(ambLight);
+  const pt = new THREE.PointLight(0xf472b6, 2, 40);
+  pt.position.set(5, 8, 10);
+  scene.add(pt);
+  const pt2 = new THREE.PointLight(0x9333ea, 1.5, 35);
+  pt2.position.set(-8, -5, 8);
+  scene.add(pt2);
+
+  window._hearts = hearts;
+  window._heartScene = scene;
+  window._heartCamera = camera;
+  let t = 0;
+  let celebrating = false;
+
+  window._triggerHeartFinale = function() {
+    celebrating = true;
+    hearts.forEach((h, i) => {
+      const delay = i * 0.08;
+      setTimeout(() => {
+        const outX = (h.mesh.position.x > 0 ? 1 : -1) * (20 + Math.random() * 10);
+        const outY = 20 + Math.random() * 10;
+        gsap.to(h.mesh.position, { x: outX, y: outY, z: -5, duration: 2.5, ease: 'power2.in' });
+        gsap.to(h.mesh.material, { opacity: 0, duration: 2, delay: 0.5, ease: 'power1.in' });
+        gsap.to(h.mesh.rotation, { z: h.mesh.rotation.z + (Math.random() - 0.5) * Math.PI * 4, duration: 2.5, ease: 'power2.in' });
+      }, delay * 1000);
+    });
+  };
+
+  (function animate() {
+    requestAnimationFrame(animate);
+    t += 0.012;
+    if (!celebrating) {
+      hearts.forEach(h => {
+        h.mesh.rotation.x += h.speed.x;
+        h.mesh.rotation.y += h.speed.y;
+        h.mesh.position.y = h.baseY + Math.sin(t + h.phase) * h.amp;
+      });
+    }
+    renderer.render(scene, camera);
+  })();
+})();
+
+/* ──────────────────────────
+   STEP NAVIGATION
+────────────────────────── */
+let currentStep = 1;
+const TOTAL = 5;
+const progress = [0, 20, 40, 60, 80, 100];
+
+function goTo(n) {
+  const from = document.getElementById('step-' + currentStep);
+  const to   = document.getElementById('step-' + n);
+
+  gsap.to(from, {
+    opacity: 0, scale: 0.94, y: -20, duration: 0.4, ease: 'power2.in',
+    onComplete: () => { from.classList.remove('active'); from.style.display = 'none'; }
+  });
+
+  to.style.display = 'block';
+  to.classList.add('active');
+  gsap.fromTo(to, { opacity: 0, scale: 0.92, y: 30 }, { opacity: 1, scale: 1, y: 0, duration: 0.55, ease: 'power2.out' });
+
+  // Stagger children
+  const children = [...to.children];
+  children.forEach((el, i) => {
+    gsap.fromTo(el, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, delay: 0.12 + i * 0.1, ease: 'power2.out' });
+  });
+
+  currentStep = n;
+  document.getElementById('progress-bar').style.width = progress[n] + '%';
+
+  // Polaroid tilt effect
+  if (n === 4) {
+    const wrap = document.getElementById('polaroid-wrap');
+    const pol  = document.getElementById('polaroid');
+    wrap.addEventListener('mousemove', e => {
+      const r = wrap.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const dx = (e.clientX - cx) / (r.width / 2);
+      const dy = (e.clientY - cy) / (r.height / 2);
+      gsap.to(pol, { rotateX: -dy * 14, rotateY: dx * 14, rotateZ: -3, duration: 0.3, ease: 'power1.out' });
+    });
+    wrap.addEventListener('mouseleave', () => {
+      gsap.to(pol, { rotateX: 0, rotateY: 0, rotateZ: -3, duration: 0.5, ease: 'power2.out' });
+    });
+  }
+}
+
+/* ──────────────────────────
+   CELEBRATE FINALE
+────────────────────────── */
+function celebrate() {
+  const btn = document.getElementById('celebrate-btn');
+  btn.disabled = true;
+  gsap.to(btn, { opacity: 0, y: -10, duration: 0.3, onComplete: () => btn.style.display = 'none' });
+
+  // Final message
+  const msg = document.getElementById('final-msg');
+  msg.style.display = 'block';
+  gsap.fromTo(msg, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: 'power2.out' });
+
+  // Progress to 100%
+  document.getElementById('progress-bar').style.width = '100%';
+
+  // Confetti bursts
+  const end = Date.now() + 5000;
+  const colors = ['#f472b6','#e11d48','#fbbf24','#a855f7','#38bdf8','#fff'];
+
+  // Initial burst from corners
+  setTimeout(() => {
+    [0.1, 0.9].forEach(x => {
+      confetti({ particleCount: 80, angle: x < 0.5 ? 60 : 120, spread: 55, origin: { x, y: 0.95 }, colors, startVelocity: 55 });
+    });
+  }, 100);
+
+  // Emoji confetti shower
+  const emojiDefaults = { startVelocity: 20, spread: 360, ticks: 60, zIndex: 200, disableForReducedMotion: true };
+  function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+  const emojiInterval = setInterval(() => {
+    if (Date.now() > end) { clearInterval(emojiInterval); return; }
+    const count = 2;
+    ['❤️','💖','✨'].forEach(e => {
+      confetti({ ...emojiDefaults, particleCount: count, origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 },
+        shapes: [confetti.shapeFromText({ text: e, scalar: 2.2 })], scalar: 2.2 });
+    });
+    confetti({ particleCount: 6, spread: 70, origin: { x: randomInRange(0.2, 0.8), y: randomInRange(0, 0.4) }, colors, startVelocity: 12 });
+  }, 180);
+
+  // Continuous gentle shower
+  const showerInterval = setInterval(() => {
+    if (Date.now() > end) { clearInterval(showerInterval); return; }
+    confetti({ particleCount: 5, spread: 80, origin: { x: Math.random(), y: 0 }, colors, gravity: 0.55, ticks: 200 });
+  }, 60);
+
+  // Hearts finale
+  if (window._triggerHeartFinale) window._triggerHeartFinale();
+}
+
+/* ──────────────────────────
+   INIT Step 1
+────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  const s1 = document.getElementById('step-1');
+  gsap.set(s1, { opacity: 0, y: 30 });
+  gsap.to(s1, { opacity: 1, y: 0, duration: 0.8, delay: 0.4, ease: 'power2.out' });
+  const children = [...s1.children];
+  children.forEach((el, i) => {
+    gsap.fromTo(el, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, delay: 0.6 + i * 0.12, ease: 'power2.out' });
+  });
+  document.getElementById('progress-bar').style.width = '20%';
+});
+</script>
+</body>
+</html>
